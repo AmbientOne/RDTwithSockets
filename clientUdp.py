@@ -1,3 +1,6 @@
+# Sender
+
+
 '''import socket
 
 msgFromClient = "Hello UDP Server"
@@ -26,34 +29,45 @@ print(msg)
 from socket import timeout
 import socket
 import sys
-import time
-import threading
 
-from check import ip_checksum
+from checkForClient import ip_checksum
 import random
 
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-host='localhost'
-port = 9680
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+except socket.error:
+    print('Failed to create socket')
+    sys.exit()
 
-s.settimeout(1)
+host = 'localhost'
+port = 9680
 
 seq = 0
 
-
-for i in range(10):
-    msg= 'Message #'+str(i)
+# function that sendspkt
+i = 0
+while i < 10:
+    msg = 'Message #'+str(i)
     checksum = ip_checksum(msg)
     error = random.random()
-    #if error>0.75:
-    # checksum=checksum+str(1)
-    s.sendto(str(seq)+' '+msg + '' + checksum ,(host,port))
-    print('Sent: '+ str(seq),' '+ msg + ' checksum = ' + checksum)
+    #if error > 0.75:
+     #checksum = checksum + str(1)
+    val = str(seq) + " " + msg + " " + checksum
+    s.sendto(val.encode("utf-8"), (host, port))  # sndpkt
+    s.settimeout(10)
+
+    print('Sent: ' + str(seq), ' ' + msg + ' checksum = ' + checksum)
+
     try:
         d = s.recvfrom(1024)
         print(d[0])
         decoded = d[0].decode('utf-8')
         if decoded.startswith('ACK'):
-            seq= 1 - seq
+            seq = 1 - seq
+            print("Sucessfuly ACK'ed!")
+            i+=1
+            continue
     except timeout:
-        print('Timeout')
+        print('Timeout, resending')
+
+
